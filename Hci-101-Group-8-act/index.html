@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Voice Controlled Notes & Translator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: none;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        select {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        #translated-text {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Controlled Notes App</h1>
+        <p>Record voice notes and translate them into different languages.</p>
+
+        <h3 class="no-browser-support">Your browser may not support voice recognition. Try using Google Chrome.</h3>
+
+        <div class="app"> 
+            <h3>Add New Note</h3>
+            <textarea id="note-textarea" placeholder="Type or use voice recognition..." rows="6"></textarea>
+            <br>
+            <button id="start-record-btn">Start Recognition</button>
+            <button id="pause-record-btn">Pause Recognition</button>
+            
+            <h3>Translate Note</h3>
+            <select id="language-select">
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="zh">Chinese</option>
+                <option value="hi">Hindi</option>
+            </select>
+            <button id="translate-btn">Translate</button>
+            <p id="translated-text"></p>
+            
+         
+         </div>
+    </div>
+    
+    <script>
+        const noteTextarea = document.getElementById("note-textarea");
+        const translateBtn = document.getElementById("translate-btn");
+        const languageSelect = document.getElementById("language-select");
+        const translatedText = document.getElementById("translated-text");
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        document.getElementById("start-record-btn").addEventListener("click", () => {
+            recognition.start();
+        });
+
+        document.getElementById("pause-record-btn").addEventListener("click", () => {
+            recognition.stop();
+        });
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            noteTextarea.value += transcript + " ";
+        };
+
+        translateBtn.addEventListener("click", async () => {
+            const text = noteTextarea.value;
+            const targetLang = languageSelect.value;
+            if (!text) {
+                alert("Please enter a note to translate.");
+                return;
+            }
+            
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
+                const data = await response.json();
+                translatedText.textContent = data.responseData.translatedText;
+            } catch (error) {
+                console.error("Translation error:", error);
+                translatedText.textContent = "Translation failed. Please try again.";
+            }
+        });
+    </script>
+</body>
+</html>
